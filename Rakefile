@@ -15,6 +15,12 @@ namespace :test do
     t.pattern = 'test/remote/*_test.rb'
     t.verbose = true
   end
+
+  Rake::TestTask.new(:au_post) do |t|
+    t.libs << "test"
+    t.pattern = 'test/remote/australia_post_test.rb'
+    t.verbose = true
+  end
 end
 
 desc "Default Task"
