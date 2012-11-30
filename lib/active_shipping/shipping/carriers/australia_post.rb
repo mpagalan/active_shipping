@@ -26,7 +26,7 @@ module ActiveMerchant
           begin
             ssl_get(url, {'AUTH-KEY' => options[:key]})
           rescue => error
-            error.response.body
+            error.respond_to?(:response) ? error.response.body : error.to_s
           end
         end
       end
