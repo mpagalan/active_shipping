@@ -22,6 +22,7 @@ module ActiveMerchant
 
       def commit(urls, options)
         res = nil
+        ssl_strict = false
         save_request(urls).map do |url| 
           begin
             ssl_get(url, {'AUTH-KEY' => options[:key]})
