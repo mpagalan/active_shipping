@@ -2,6 +2,9 @@ module ActiveMerchant
   module Shipping
     class AustraliaPost < Carrier
 
+      self.retry_safe = true
+      self.ssl_strict = false
+
       cattr_reader :name
       @@name = "Australia Post"
 
@@ -22,7 +25,6 @@ module ActiveMerchant
 
       def commit(urls, options)
         res = nil
-        ssl_strict = false
         save_request(urls).map do |url| 
           begin
             ssl_get(url, {'AUTH-KEY' => options[:key]})
