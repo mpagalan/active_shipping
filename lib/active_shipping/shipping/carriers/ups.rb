@@ -113,6 +113,16 @@ module ActiveMerchant
         parse_rate_response(origin, destination, packages, response, options)
       end
 
+      def find_sure_post_rates(origin, destination, packages, options={})
+        origin, destination = upsified_location(origin), upsified_location(destination)
+        options = @options.merge(options)
+        packages = Array(packages)
+        access_request = build_access_request
+        rate_request = build_sure_post_rate_request(origin, destination, packages, options)
+        response = commit(:rates, save_request(access_request + rate_request), (options[:test] || false))
+        parse_rate_response(origin, destination, packages, response, options)
+      end
+
       def find_tracking_info(tracking_number, options={})
         options = @options.update(options)
         access_request = build_access_request
@@ -274,6 +284,74 @@ module ActiveMerchant
             # not implemented: Shipment/(Shipper|ShipTo|ShipFrom)/Address/ResidentialAddressIndicator element
           end
         end
+      end
+
+      def build_sure_post_rate_request(origin, destination, packages, options={})
+        packages = Array(packages)
+        xml_request = XmlNode.new('RatingServiceSelectionRequest') do |root_node|
+          root_node << XmlNode.new('Request') do |request|
+            request << XmlNode.new('RequestAction', 'Rate')
+            request << XmlNode.new('RequestOption', 'Rate')
+            request << XmlNode.new('TransactionReference') do |ref_node|
+              ref_node << XmlNode.new('CustomerContext', 'XOLT Rate')
+              ref_node << XmlNode.new('XpciVersion', '1.0')
+            end
+          end
+
+          pickup_type = options[:pickup_type] || :daily_pickup
+
+          root_node << XmlNode.new('PickupType') do |pickup_type_node|
+            pickup_type_node << XmlNode.new('Code', PICKUP_CODES[pickup_type])
+          end
+
+          root_node << XmlNode.new('Shipment') do |shipment|
+            # not implemented: Shipment/Description element
+            shipment << build_location_node('Shipper', (options[:shipper] || origin), options)
+            shipment << build_location_node('ShipTo', destination, options)
+            if options[:shipper] and options[:shipper] != origin
+              shipment << build_location_node('ShipFrom', origin, options)
+            end
+
+            origin_account = @options[:origin_account] || options[:origin_account]
+            shipment << XmlNode.new('PaymentInformation') do |payment_info|
+              payment_info << XmlNode.new('Prepaid') do |p|
+                p << XmlNode.new('BillShipper') do |b|
+                  b <<  XmlNode.new('AccountNumber', origin_account)
+                end
+              end
+            end
+
+            packages.each do |package|
+              imperial = ['US','LR','MM'].include?(origin.country_code(:alpha2))
+
+              shipment << XmlNode.new("Package") do |package_node|
+                package_node << XmlNode.new("PackagingType") do |packaging_type|
+                  packaging_type << XmlNode.new("Code", '02')
+                end
+
+                package_node << XmlNode.new("Dimensions") do |dimensions|
+                  dimensions << XmlNode.new("UnitOfMeasurement") do |units|
+                    units << XmlNode.new("Code", imperial ? 'IN' : 'CM')
+                  end
+                  [:length,:width,:height].each do |axis|
+                    value = ((imperial ? package.inches(axis) : package.cm(axis)).to_f*1000).round/1000.0 # 3 decimals
+                    dimensions << XmlNode.new(axis.to_s.capitalize, [value,0.1].max)
+                  end
+                end
+
+                package_node << XmlNode.new("PackageWeight") do |package_weight|
+                  package_weight << XmlNode.new("UnitOfMeasurement") do |units|
+                    units << XmlNode.new("Code", imperial ? 'LBS' : 'KGS')
+                  end
+
+                  value = ((imperial ? package.lbs : package.kgs).to_f*1000).round/1000.0 # 3 decimals
+                  package_weight << XmlNode.new("Weight", [value,0.1].max)
+                end
+              end #Package
+            end #packages array
+          end #Shipment
+        end #RatingServiceSelectionRequest
+        xml_request.to_s
       end
 
       def parse_rate_response(origin, destination, packages, response, options={})
