@@ -312,6 +312,12 @@ module ActiveMerchant
               shipment << build_location_node('ShipFrom', origin, options)
             end
 
+            shipping_service_code = options[:shipping_service_code] || 93
+            shipment << XmlNode.new('Service') do |service|
+              service << XmlNode.new('Code', shipping_service_code)
+              service << XmlNode.new('Description', 'UPS SurePost')
+            end
+
             origin_account = @options[:origin_account] || options[:origin_account]
             shipment << XmlNode.new('PaymentInformation') do |payment_info|
               payment_info << XmlNode.new('Prepaid') do |p|
