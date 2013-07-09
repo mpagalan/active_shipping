@@ -62,7 +62,9 @@ module ActiveMerchant
         "83" => "UPS Today Dedicated Courier",
         "84" => "UPS Today Intercity",
         "85" => "UPS Today Express",
-        "86" => "UPS Today Express Saver"
+        "86" => "UPS Today Express Saver",
+        "92" => "UPS SurePost",
+        "93" => "UPS SurePost"
       }
 
       CANADA_ORIGIN_SERVICES = {
