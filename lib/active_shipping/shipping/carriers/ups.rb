@@ -63,8 +63,8 @@ module ActiveMerchant
         "84" => "UPS Today Intercity",
         "85" => "UPS Today Express",
         "86" => "UPS Today Express Saver",
-        "92" => "UPS SurePost",
-        "93" => "UPS SurePost"
+        "92" => "Standard Shipping (4-8days)",
+        "93" => "Standard Shipping (4-8days)"
       }
 
       CANADA_ORIGIN_SERVICES = {
