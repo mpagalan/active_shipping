@@ -314,6 +314,12 @@ module ActiveMerchant
               shipment << build_location_node('ShipFrom', origin, options)
             end
 
+            if options[:shipper]
+              shipment << XmlNode.new('RateInformation') do |rate_info|
+                rate_info << XmlNode.new('NegotiatedRatesIndicator')
+              end
+            end
+
             shipping_service_code = options[:shipping_service_code] || 93
             shipment << XmlNode.new('Service') do |service|
               service << XmlNode.new('Code', shipping_service_code)
