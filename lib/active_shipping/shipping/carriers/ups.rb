@@ -48,7 +48,7 @@ module ActiveMerchant
       DEFAULT_SERVICES = {
         "01" => "UPS Next Day Air",
         "02" => "UPS Second Day Air",
-        "03" => "UPS Ground",
+        "03" => "UPS Ground (3-5 Business Days)",
         "07" => "UPS Worldwide Express",
         "08" => "UPS Worldwide Expedited",
         "11" => "UPS Standard",
@@ -63,8 +63,8 @@ module ActiveMerchant
         "84" => "UPS Today Intercity",
         "85" => "UPS Today Express",
         "86" => "UPS Today Express Saver",
-        "92" => "Standard Shipping (4-8days)",
-        "93" => "Standard Shipping (4-8days)"
+        "92" => "UPS Standard (4-8 Business Days)",
+        "93" => "UPS Standard (4-8 Business Days)"
       }
 
       CANADA_ORIGIN_SERVICES = {
@@ -355,10 +355,10 @@ module ActiveMerchant
 
                 package_node << XmlNode.new("PackageWeight") do |package_weight|
                   package_weight << XmlNode.new("UnitOfMeasurement") do |units|
-                    units << XmlNode.new("Code", imperial ? 'LBS' : 'KGS')
+                    units << XmlNode.new("Code", imperial ? (options[:shipping_service_code] == 92 ? 'OZS' : 'LBS') : 'KGS')
                   end
 
-                  value = ((imperial ? package.lbs : package.kgs).to_f*1000).round/1000.0 # 3 decimals
+                  value = ((imperial ? (options[:shipping_service_code] == 92 ? package.oz : package.lbs) : package.kgs).to_f*1000).round/1000.0 # 3 decimals
                   package_weight << XmlNode.new("Weight", [value,0.1].max)
                 end
               end #Package
